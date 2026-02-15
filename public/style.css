@@ -1,0 +1,87 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 20px;
+  background: linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 100%);
+  color: #e0e0e0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+h1 {
+  text-align: center;
+  color: #FFD700;
+  text-shadow: 0 0 10px #FFD700;
+  margin-bottom: 30px;
+  font-size: 2.5em;
+}
+
+.dashboard {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 25px;
+}
+
+.card {
+  background: rgba(42, 42, 42, 0.8);
+  backdrop-filter: blur(10px);
+  border: 1px solid #333;
+  border-left: 5px solid #FFD700;
+  padding: 25px;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 12px 40px rgba(255,215,0,0.2);
+}
+
+.card h2 {
+  color: #FFD700;
+  margin: 0 0 15px 0;
+  font-size: 1.3em;
+}
+
+.value {
+  font-size: 2.5em;
+  font-weight: bold;
+  margin-top: 10px;
+  text-shadow: 0 0 5px currentColor;
+}
+
+.monitor {
+  font-size: 1.1em;
+  line-height: 1.8;
+}
+
+.monitor div {
+  margin-bottom: 8px;
+}
+
+.sparkline canvas {
+  height: 120px !important;
+}
+
+#health, #trend {
+  font-size: 1.1em;
+  line-height: 1.6;
+}
+
+@media (max-width: 768px) {
+  .cards {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+  .value {
+    font-size: 2em;
+  }
+}

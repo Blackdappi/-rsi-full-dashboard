@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang=&quot;en&quot;>
+<head>
+    <meta charset=&quot;UTF-8&quot;>
+    <meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1.0&quot;>
+    <title>RSI Trading Bot Dashboard</title>
+    <link rel=&quot;stylesheet&quot; href=&quot;style.css&quot;>
+    <script src=&quot;https://cdn.jsdelivr.net/npm/chart.js&quot;></script>
+</head>
+<body>
+    <div class=&quot;dashboard&quot;>
+        <h1>🚀 RSI Trading Bot Dashboard</h1>
+        <div class=&quot;cards&quot;>
+            <div class=&quot;card&quot;>
+                <h2>💰 P&L</h2>
+                <div class=&quot;value&quot; id=&quot;pnl&quot;>$0.00</div>
+            </div>
+            <div class=&quot;card&quot;>
+                <h2>📊 Winrate</h2>
+                <div class=&quot;value&quot; id=&quot;winrate&quot;>0%</div>
+            </div>
+            <div class=&quot;card&quot;>
+                <h2>📉 Losses</h2>
+                <div class=&quot;value&quot; id=&quot;losses&quot;>$0.00</div>
+            </div>
+            <div class=&quot;card&quot;>
+                <h2>🔄 Total Trades</h2>
+                <div class=&quot;value&quot; id=&quot;trades&quot;>0</div>
+            </div>
+            <div class=&quot;card sparkline&quot;>
+                <h2>📈 Sparkline</h2>
+                <canvas id=&quot;sparkChart&quot;></canvas>
+            </div>
+            <div class=&quot;card&quot;>
+                <h2>📡 Monitor</h2>
+                <div class=&quot;monitor&quot;>
+                    <div>RSI: <span id=&quot;currentRsi&quot;>-</span></div>
+                    <div>Price: $<span id=&quot;currentPrice&quot;>-</span></div>
+                    <div>Signal: <span id=&quot;signal&quot;>-</span></div>
+                </div>
+            </div>
+            <div class=&quot;card&quot;>
+                <h2>❤️ Health</h2>
+                <div id=&quot;health&quot;>Status: -</div>
+            </div>
+            <div class=&quot;card&quot;>
+                <h2>📊 Trend</h2>
+                <div id=&quot;trend&quot;>-</div>
+            </div>
+        </div>
+        <div style=&quot;text-align:center; margin-top:30px; color:#888;&quot;>Auto-refreshing every 30s</div>
+    </div>
+    <script src=&quot;script.js&quot;></script>
+</body>
+</html>
