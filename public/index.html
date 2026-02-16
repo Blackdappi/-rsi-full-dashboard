@@ -1,55 +1,108 @@
 <!DOCTYPE html>
-<html lang=&quot;en&quot;>
+<html lang="en">
 <head>
-    <meta charset=&quot;UTF-8&quot;>
-    <meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1.0&quot;>
-    <title>RSI Trading Bot Dashboard</title>
-    <link rel=&quot;stylesheet&quot; href=&quot;style.css&quot;>
-    <script src=&quot;https://cdn.jsdelivr.net/npm/chart.js&quot;></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RSI Trading Bot - Advanced Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div class=&quot;dashboard&quot;>
-        <h1>🚀 RSI Trading Bot Dashboard</h1>
-        <div class=&quot;cards&quot;>
-            <div class=&quot;card&quot;>
-                <h2>💰 P&L</h2>
-                <div class=&quot;value&quot; id=&quot;pnl&quot;>$0.00</div>
+    <div class="container">
+        <header>
+            <div class="logo">
+                <h1>🚀 RSI Trading Bot</h1>
             </div>
-            <div class=&quot;card&quot;>
-                <h2>📊 Winrate</h2>
-                <div class=&quot;value&quot; id=&quot;winrate&quot;>0%</div>
-            </div>
-            <div class=&quot;card&quot;>
-                <h2>📉 Losses</h2>
-                <div class=&quot;value&quot; id=&quot;losses&quot;>$0.00</div>
-            </div>
-            <div class=&quot;card&quot;>
-                <h2>🔄 Total Trades</h2>
-                <div class=&quot;value&quot; id=&quot;trades&quot;>0</div>
-            </div>
-            <div class=&quot;card sparkline&quot;>
-                <h2>📈 Sparkline</h2>
-                <canvas id=&quot;sparkChart&quot;></canvas>
-            </div>
-            <div class=&quot;card&quot;>
-                <h2>📡 Monitor</h2>
-                <div class=&quot;monitor&quot;>
-                    <div>RSI: <span id=&quot;currentRsi&quot;>-</span></div>
-                    <div>Price: $<span id=&quot;currentPrice&quot;>-</span></div>
-                    <div>Signal: <span id=&quot;signal&quot;>-</span></div>
+            <div class="header-metrics">
+                <div class="metric">
+                    <span class="label">BTC Price</span>
+                    $<span class="value big" id="currentPrice">-</span>
+                </div>
+                <div class="metric pnl-header" id="pnlHeader">
+                    <span class="label">Total P&L</span>
+                    <span class="value big" id="pnlValue">$0.00</span>
+                    <span class="change" id="pnlChange">0%</span>
                 </div>
             </div>
-            <div class=&quot;card&quot;>
-                <h2>❤️ Health</h2>
-                <div id=&quot;health&quot;>Status: -</div>
-            </div>
-            <div class=&quot;card&quot;>
-                <h2>📊 Trend</h2>
-                <div id=&quot;trend&quot;>-</div>
-            </div>
+        </header>
+        <div class="layout">
+            <aside class="sidebar">
+                <div class="card monitor">
+                    <h3>📡 Live Monitor</h3>
+                    <div class="metric-row">
+                        <span>RSI:</span>
+                        <span class="value" id="currentRsi">-</span>
+                    </div>
+                    <div class="signal-container" id="signalContainer">
+                        <span class="signal-label">Signal:</span>
+                        <span class="signal" id="signal">HOLD</span>
+                    </div>
+                </div>
+                <div class="card health">
+                    <h3>❤️ Bot Health</h3>
+                    <div id="health">-</div>
+                </div>
+                <div class="card trend">
+                    <h3>📈 Market Trend</h3>
+                    <div id="trend">-</div>
+                </div>
+            </aside>
+            <main>
+                <div class="charts-row">
+                    <div class="chart-card">
+                        <h3>💹 Price / Equity</h3>
+                        <canvas id="priceChart"></canvas>
+                    </div>
+                    <div class="chart-card">
+                        <h3>📊 RSI (14)</h3>
+                        <canvas id="rsiChart"></canvas>
+                    </div>
+                </div>
+                <div class="cards-grid">
+                    <div class="card metric">
+                        <h4>💰 Total P&L</h4>
+                        <div class="value big" id="pnl">$0.00</div>
+                    </div>
+                    <div class="card metric">
+                        <h4>🏆 Win Rate</h4>
+                        <div class="value big" id="winrate">0%</div>
+                    </div>
+                    <div class="card metric">
+                        <h4>📉 Total Losses</h4>
+                        <div class="value big" id="losses">$0.00</div>
+                    </div>
+                    <div class="card metric">
+                        <h4>🔄 Total Trades</h4>
+                        <div class="value big" id="trades">0</div>
+                    </div>
+                    <div class="card sparkline">
+                        <h4>Sparkline (PnL)</h4>
+                        <canvas id="sparkChart" height="80"></canvas>
+                    </div>
+                </div>
+                <div class="trades-section">
+                    <h3>Recent Trades</h3>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Time</th>
+                                    <th>RSI</th>
+                                    <th>Signal</th>
+                                    <th>Entry</th>
+                                    <th>Exit</th>
+                                    <th>P&L</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tradesBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </main>
         </div>
-        <div style=&quot;text-align:center; margin-top:30px; color:#888;&quot;>Auto-refreshing every 30s</div>
     </div>
-    <script src=&quot;script.js&quot;></script>
+    <script src="script.js"></script>
 </body>
 </html>
