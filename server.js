@@ -33,7 +33,7 @@ db.get("SELECT COUNT(*) as cnt FROM trades", (err, row) => {
 });
 
 function generateSimTrades() {
-  const count = 30;
+  const count = 1000;
   for(let i = 0; i < count; i++) {
     const rsi = Math.random() < 0.5 ? (25 + Math.random() * 10) : (70 + Math.random() * 10);
     const signal = rsi < 35 ? 'BUY' : 'SELL';
