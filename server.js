@@ -1,5 +1,5 @@
 const express = require('express');
-const Database = require('better-sqlite3');
+const fs = require('fs');
 const path = require('path');
 const cors = require('cors');
 
@@ -9,60 +9,79 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.static('public'));
 
-const dbPath = path.join(__dirname, 'trades.db');
-const db = new Database(dbPath);
+const tradesFile = path.join(__dirname, 'trades.json');
+let trades = [];
 
-db.exec(`CREATE TABLE IF NOT EXISTS trades (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-  symbol TEXT DEFAULT 'BTCUSDT',
-  rsi REAL,
-  signal TEXT,
-  entry_price REAL,
-  exit_price REAL,
-  pnl REAL,
-  is_win INTEGER DEFAULT 0
-)`);
+function loadTrades() {
+  if (fs.existsSync(tradesFile)) {
+    try {
+      trades = JSON.parse(fs.readFileSync(tradesFile, 'utf8'));
+      console.log(`Loaded ${trades.length} trades from JSON.`);
+    } catch(e) {
+      console.error('Error loading trades.json:', e.message);
+      trades = [];
+    }
+  } else {
+    console.log('No trades.json found.');
+  }
+}
 
-const countStmt = db.prepare("SELECT COUNT(*) as cnt FROM trades");
-const row = countStmt.get();
-if (row && row.cnt === 0) {
-  generateSimTrades();
+function saveTrades() {
+  try {
+    fs.writeFileSync(tradesFile, JSON.stringify(trades, null, 2));
+    console.log('Saved trades to JSON.');
+  } catch(e) {
+    console.error('Error saving trades:', e.message);
+  }
 }
 
 function generateSimTrades() {
+  console.log('Generating simulated trades...');
+  trades = [];
   const count = 1000;
-  const insertStmt = db.prepare(`INSERT INTO trades (rsi, signal, entry_price, exit_price, pnl, is_win) VALUES (?, ?, ?, ?, ?, ?)`);
-  const tx = db.transaction(() => {
-    for(let i = 0; i < count; i++) {
-      const rsi = Math.random() < 0.5 ? (25 + Math.random() * 10) : (70 + Math.random() * 10);
-      const signal = rsi < 35 ? 'BUY' : 'SELL';
-      const entry_price = 45000 + Math.random() * 10000;
-      const change_pct = (Math.random() - 0.4) * 0.06;
-      const exit_price = entry_price * (1 + change_pct);
-      const pnl = signal === 'BUY' ? (exit_price - entry_price) : (entry_price - exit_price);
-      const is_win = pnl > 0 ? 1 : 0;
-      insertStmt.run(rsi.toFixed(2)*1, signal, entry_price, exit_price, parseFloat(pnl.toFixed(4)), is_win);
-    }
-  });
-  tx();
+  for(let i = 0; i < count; i++) {
+    const rsi = Math.random() < 0.5 ? (25 + Math.random() * 10) : (70 + Math.random() * 10);
+    const signal = rsi < 35 ? 'BUY' : 'SELL';
+    const entry_price = 45000 + Math.random() * 10000;
+    const change_pct = (Math.random() - 0.4) * 0.06;
+    const exit_price = entry_price * (1 + change_pct);
+    const pnl = signal === 'BUY' ? (exit_price - entry_price) : (entry_price - exit_price);
+    const is_win = pnl > 0 ? 1 : 0;
+    trades.push({
+      id: i + 1,
+      timestamp: new Date(Date.now() - (count - i - 1) * 3600000).toISOString(),
+      symbol: 'BTCUSDT',
+      rsi: parseFloat(rsi.toFixed(2)),
+      signal,
+      entry_price: parseFloat(entry_price.toFixed(2)),
+      exit_price: parseFloat(exit_price.toFixed(2)),
+      pnl: parseFloat(pnl.toFixed(4)),
+      is_win
+    });
+  }
+  saveTrades();
   console.log(`Generated ${count} simulated trades.`);
+}
+
+// Load and check
+loadTrades();
+if (trades.length === 0) {
+  generateSimTrades();
 }
 
 // API endpoints
 app.get('/api/stats', (req, res) => {
   try {
-    const statsStmt = db.prepare(`
-      SELECT 
-        COUNT(*) as total_trades,
-        COALESCE(SUM(pnl), 0) as total_pnl,
-        COALESCE(AVG(is_win)*100, 0) as winrate,
-        COALESCE(SUM(CASE WHEN pnl < 0 THEN pnl ELSE 0 END), 0) as total_losses,
-        COUNT(CASE WHEN pnl < 0 THEN 1 END) as num_losses
-      FROM trades
-    `);
-    const stats = statsStmt.get();
-    res.json(stats);
+    const total_trades = trades.length;
+    if (total_trades === 0) {
+      return res.json({total_trades: 0, total_pnl: 0, winrate: 0, total_losses: 0, num_losses: 0});
+    }
+    const total_pnl = trades.reduce((sum, t) => sum + t.pnl, 0);
+    const wins = trades.reduce((sum, t) => sum + t.is_win, 0);
+    const winrate = parseFloat((wins / total_trades * 100).toFixed(2));
+    const total_losses = trades.reduce((sum, t) => sum + (t.pnl < 0 ? t.pnl : 0), 0);
+    const num_losses = trades.filter(t => t.pnl < 0).length;
+    res.json({total_trades, total_pnl, winrate, total_losses, num_losses});
   } catch(err) {
     res.status(500).json({error: err.message});
   }
@@ -70,9 +89,8 @@ app.get('/api/stats', (req, res) => {
 
 app.get('/api/trades', (req, res) => {
   try {
-    const tradesStmt = db.prepare('SELECT * FROM trades ORDER BY id DESC LIMIT 10');
-    const rows = tradesStmt.all();
-    res.json(rows);
+    const recentTrades = trades.slice(-10).reverse();
+    res.json(recentTrades);
   } catch(err) {
     res.status(500).json({error: err.message});
   }
@@ -80,12 +98,20 @@ app.get('/api/trades', (req, res) => {
 
 app.get('/api/monitor', (req, res) => {
   try {
-    const monitorStmt = db.prepare('SELECT * FROM trades ORDER BY id DESC LIMIT 1');
-    const row = monitorStmt.get();
+    const last = trades[trades.length - 1];
+    if (!last) {
+      return res.json({
+        current_rsi: '50',
+        current_price: '50000',
+        signal: 'HOLD',
+        status: 'Running'
+      });
+    }
+    const current_price = parseFloat(((last.entry_price + last.exit_price) / 2).toFixed(2));
     res.json({
-      current_rsi: row ? parseFloat(row.rsi).toFixed(2) : '50',
-      current_price: row ? parseFloat(((parseFloat(row.entry_price) + parseFloat(row.exit_price))/2).toFixed(2)) : 50000,
-      signal: row ? row.signal : 'HOLD',
+      current_rsi: last.rsi.toFixed(2),
+      current_price,
+      signal: last.signal,
       status: 'Running'
     });
   } catch(err) {
@@ -95,18 +121,16 @@ app.get('/api/monitor', (req, res) => {
 
 app.get('/api/sparkline', (req, res) => {
   try {
-    const sparkStmt = db.prepare(`
-      SELECT 
-        id,
-        COALESCE(SUM(pnl) OVER (ORDER BY id ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW), 0) as equity
-      FROM trades 
-      ORDER BY id ASC
-    `);
-    const rows = sparkStmt.all();
-    const recent = rows.slice(-20);
+    const equityCurve = trades.reduce((curve, trade, index) => {
+      const prev = index === 0 ? 0 : curve[index - 1];
+      curve.push(prev + trade.pnl);
+      return curve;
+    }, []);
+    const recentTrades = trades.slice(-20);
+    const recentEquity = equityCurve.slice(-20);
     res.json({
-      labels: recent.map(r => `#${r.id}`),
-      data: recent.map(r => parseFloat(r.equity.toFixed(2)))
+      labels: recentTrades.map(r => `#${r.id}`),
+      data: recentEquity.map(e => parseFloat(e.toFixed(2)))
     });
   } catch(err) {
     res.status(500).json({error: err.message});
@@ -119,13 +143,11 @@ app.get('/api/health', (req, res) => {
 
 app.get('/api/trend', (req, res) => {
   try {
-    const trendStmt = db.prepare('SELECT pnl FROM trades ORDER BY id DESC LIMIT 5');
-    const rows = trendStmt.all();
-    if (rows.length === 0) {
-      res.json({trend: 'Neutral', change: '0%'});
-      return;
+    const recentPnls = trades.slice(-5).map(t => t.pnl);
+    if (recentPnls.length === 0) {
+      return res.json({trend: 'Neutral', change: '0%'});
     }
-    const avg = rows.reduce((sum, r) => sum + parseFloat(r.pnl), 0) / rows.length;
+    const avg = recentPnls.reduce((sum, p) => sum + p, 0) / recentPnls.length;
     const trend = avg > 0 ? 'Bullish' : 'Bearish';
     const change = (avg * 5).toFixed(2) + '%';
     res.json({trend, change});
